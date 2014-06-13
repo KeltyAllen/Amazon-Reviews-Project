@@ -2,7 +2,7 @@ $(function () {
 		
 		var margin = {top: 20, right: 20, bottom: 30, left: 40},
     width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    height = 400 - margin.top - margin.bottom;
 		
 		var graphData = function (data) {
 			$("#graph_container").empty();
@@ -47,7 +47,8 @@ $(function () {
 			
 			// don't want dots overlapping axis, so add in buffer to data domain
 			xScale.domain([d3.min(data, xValue)-1, d3.max(data, xValue)+1]);
-			yScale.domain([0, 6]);
+			//xScale.domain([d3.min(Date(xvalue)), d3.max(data, xValue)+1]);
+			yScale.domain([1, 5]);
 			
 			// x-axis
 			svg.append("g")
