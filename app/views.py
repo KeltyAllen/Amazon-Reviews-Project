@@ -1,18 +1,61 @@
-from flask import render_template
+from flask import render_template, _app_ctx_stack
 from app import app, host, port, user, passwd, db
-from app.helpers.database import con_db
+from app.helpers.database #import con_db
+#import numpy as np
+#import matplotlib.pyplot as plt
+import MySQLdb
+import sys
 
 
 # To create a database connection, add the following
 # within your view functions:
 # con = con_db(host, port, user, passwd, db)
 
+from app.helpers.database import con_db, query_db
+from app.helpers.filters import format_currency
+import jinja2
+ 
+def get_db():
+	top = _app_ctx_stack.top
+	if not hasattr(top, 'home_kitchen_db'):
+		top.home_kitchen_db = MySQLdb.connect(host="localhost", user="root", db = "home_kitchen")
+	return top.home_kitchen_db
+ 
+ 
+ 
+# ROUTING/VIEW FUNCTIONS
+@app.route('/', methods=['GET'])
+def index():
+    # Create database connection
+    con = con_db(host, port, user, passwd, db)
+ 
+    # Add custom filter to jinja2 env
+    jinja2.filters.FILTERS['format_currency'] = format_currency
+ 
+    var_dict = {
+        "country": request.args.get("country"),
+        "edu_index": request.args.get("edu_index", '0'),
+        "median_age": request.args.get("median_age", '0'),
+        "gdp": request.args.get("gdp", '0'),
+        "order_by": request.args.get("order_by", "edu_index"),
+        "sort": request.args.get("sort", "DESC")
+    }
+ 
+    # Query the database
+    data = query_db(con, var_dict)
+ 
+    # Add data to dictionary
+    var_dict["data"] = data
+ 
+    return render_template('table.html', settings=var_dict)
+
+
 
 # ROUTING/VIEW FUNCTIONS
 @app.route('/')
 @app.route('/index')
 def index():
-    # Renders index.html.
+		# Renders index.html.
     return render_template('index.html')
 
 @app.route('/home')
