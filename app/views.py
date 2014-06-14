@@ -29,16 +29,11 @@ def query_db(query):
 	cursor.execute(query)
 	return cursor.fetchall()
 	
-def running_average(data):
-	result = []
-	index = 0
+def add_average_rating(data):
 	total = 0
-	for x in data:
-		index += 1
-		total += x[1]
-		result.append([x[0], total/index])
-	return result
-		
+	for index, datum in enumerate(data):
+		total += datum['rating']
+		datum['average_rating'] = total/(index+1)	
 
 @app.route('/')
 def index():
@@ -48,8 +43,9 @@ def index():
 def product_details(product_id):
 	query = "Select RTime, RScore From all_hk Where PID = \" " + product_id +'" ORDER BY RTime ASC;'
 	data = query_db(query)
-	data = running_average(data)
+
 	formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
+	add_average_rating(formatted_data)
 	return jsonify(reviews = formatted_data)	
 
 

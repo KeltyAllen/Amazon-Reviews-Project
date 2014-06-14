@@ -8,13 +8,13 @@ $(function () {
 			$("#graph_container").empty();
 			
 			// setup x 
-			var xValue = function(d) { return d.time;}, // data -> value
-			xScale = d3.scale.linear().range([0, width]), // value -> display
+			var xValue = function(d) { return new Date(d.time * 1000);}, // data -> value
+			xScale = d3.time.scale().range([0, width]), // value -> display
 			xMap = function(d) { return xScale(xValue(d));}, // data -> display
 			xAxis = d3.svg.axis().scale(xScale).orient("bottom");
 			
 			// setup y
-			var yValue = function(d) { return d.rating;}, // data -> value
+			var yValue = function(d) { return d.average_rating;}, // data -> value
 			yScale = d3.scale.linear().range([height, 0]), // value -> display
 			yMap = function(d) { return yScale(yValue(d));}, // data -> display
 			yAxis = d3.svg.axis().scale(yScale).orient("left");
@@ -46,8 +46,9 @@ $(function () {
 			//});
 			
 			// don't want dots overlapping axis, so add in buffer to data domain
-			xScale.domain([d3.min(data, xValue)-1, d3.max(data, xValue)+1]);
-			//xScale.domain([d3.min(Date(xvalue)), d3.max(data, xValue)+1]);
+			var oneMonthMilliseconds = 30 * 24 * 60 * 60 * 1000;
+			var xAxisStartDate = new Date(d3.min(data, xValue).getTime() - oneMonthMilliseconds);
+			xScale.domain([xAxisStartDate, d3.max(data, xValue)]);
 			yScale.domain([1, 5]);
 			
 			// x-axis
