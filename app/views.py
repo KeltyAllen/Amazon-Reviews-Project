@@ -6,6 +6,7 @@ from app.helpers.database import con_db
 import MySQLdb
 import sys
 import simplejson
+import numpy as np
 
 
 # To create a database connection, add the following
@@ -40,7 +41,7 @@ def index():
 	return render_template('index.html')
  
 @app.route('/product/json/<product_id>')
-def product_details(product_id):
+def product_details(product_id):  #which table? need to combine them before demo day probably
 	query = "Select RTime, RScore From all_hk Where PID = \" " + product_id +'" ORDER BY RTime ASC;'
 	data = query_db(query)
 
