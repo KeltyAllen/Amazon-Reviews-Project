@@ -4,7 +4,7 @@ $(function () {
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 		
-		var graphData = function (data) {
+		var graphData = function (data, prodname) {
 			$("#graph_container").empty();
 			
 			// setup x 
@@ -15,7 +15,7 @@ $(function () {
 			
 			// setup y
 			var yValue = function(d) { return d.average_rating;}, // data -> value
-			yScale = d3.scale.linear().range([height, 0]), // value -> display
+			yScale = d3.scale.linear().range([height*.9, 0]), // value -> display
 			yMap = function(d) { return yScale(yValue(d));}, // data -> display
 			yAxis = d3.svg.axis().scale(yScale).orient("left");
 			
@@ -73,7 +73,7 @@ $(function () {
 			.attr("y", 6)
 			.attr("dy", ".71em")
 			.style("text-anchor", "end")
-			.text("Avg rating");
+			.text("Cumulative average rating");
 			
 			// draw dots
 			svg.selectAll(".dot")
@@ -85,6 +85,16 @@ $(function () {
 			.attr("cy", yMap);
 			//.style("fill", function(d) { return color(cValue(d));}) 
 			
+			//Put a title maybe
+			svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 5))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        //.text("Cumulative Average Review" + " for "+ prodname);
+        .text(prodname);
+			
 			
 			
 			// draw legend
@@ -95,12 +105,39 @@ $(function () {
 			
 		};
 		
+		var productstuff = function (title, reviews) {
+			$("#prod-des").empty();
+			$("#prod-des0").empty();
+			$("#prod-des1").empty();
+			$("#prod-des2").empty();
+			$("#prod-des").append(title)
+			$("#prod-des").append("Here's what people had to say: ")
+			//$("#prod-des").append("<div>").addClass("my-description").append("Heyy its working");
+		for (var i=0; i < reviews.length; i++) {
+			var d = reviews[i];
+			//console.log(d.rating);	
+			//$("#prod-des"+i).append("<div>").attr("prod-des-id",i).addClass("my-description").css("padding","30px").append('"' + d + '"')
+			$("#prod-des"+i).css("padding","40px").append('"' + d + '"')
+			
+			}
+			//$("#prod-des").text("title?")
+			
+
+		};
+		
+		
 		
 		$("#fetch_product_button").click(function() {
 				var product = $("#product").val(); 
 				$.get( "/product/json/"+product)
 				.done(function (data) {
-						graphData(data.reviews);
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
 				}); 
 		});
+		
+		
+		
+		
+		
 });
