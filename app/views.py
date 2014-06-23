@@ -1,4 +1,4 @@
-from flask import render_template, _app_ctx_stack, jsonify
+from flask import render_template, _app_ctx_stack, jsonify, request
 from app import app, host, port, user, passwd, db
 from app.helpers.database import con_db
 #import numpy as np
@@ -16,6 +16,7 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import *
 from Queue import PriorityQueue
 import datetime as dt
+import time
 import heapq
 bigram_measures = nltk.collocations.BigramAssocMeasures()
 trigram_measures = nltk.collocations.TrigramAssocMeasures()
@@ -82,14 +83,16 @@ def product_details(product_id):  #which table? need to combine them before demo
 	
 	#Here I do the analysis to get the start of the popular time, and the 3 reviews that explain it some
 	#tot_text = get_tot_review_text(PID, tablename)
-	pop_text, pop_revs, poptime = get_pop_review_text(PID, tablename)
+	rating, time = get_data(PID, tablename)
+	popmin, popmax = first_pop_time(time)
+	pop_text, pop_revs = get_time_review_text(PID, tablename, popmin, popmax)
 	#print pop_text[:200], '\n'
 	
 
 	#tot_tokens = get_tokens(tot_text)
 	pop_tokens = get_tokens(pop_text)
 	
-	sql = "Select distinct PTitle from all_hk where PID = " + '"' + PID + '";'
+	sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
 	prodname = query_db(sql)
 	#print prodname
 	prodname = tuple(x[0] for x in prodname)
@@ -135,20 +138,58 @@ def product_details(product_id):  #which table? need to combine them before demo
 				hold = hold + " <b>"+word + "</b> "
 			else:
 				hold = hold + ' ' + word + ' '
-		boldrevs.append(hold)
+		if len(hold)<300:
+			boldrevs.append(hold)
+		else:
+			boldrevs.append(hold[:300] + "...")
 
 	charttitle = "Cumulative average reviews for " + title
 	#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
 
-	date = dt.datetime.fromtimestamp(poptime)
-	poplabel = "This product became frequently reviewed starting " + date.strftime("%B") + " " + str(date.year) + ". " 
+	date = dt.datetime.fromtimestamp(popmin)
+	poplabel = "This product became frequently reviewed starting <b>" + date.strftime("%B") + " " + str(date.year) + "</b>. " 
 
 	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
 	
+	
+	###   
+	
+
+@app.route('/times/')
+def get_reviews():
+	time1 = request.args['time1']
+	time2 = request.args['time2']
+	time1 = dt.datetime.strptime(time1, "%Y/%m/%d")
+	time2 = dt.datetime.strptime(time2, "%Y/%m/%d")
+	time1 = min( time.mktime(time1.timetuple()), time.mktime(time2.timetuple()))
+	time2 = max( time.mktime(time1.timetuple()), time.mktime(time2.timetuple()))
+	
+	return "HI!"
 
 
+@app.route('/slides')
+def about():
+    # Renders slides.html.
+    return render_template('slides.html')
+
+@app.route('/author')
+def contact():
+    # Renders author.html.
+    return render_template('author.html')
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
+
+
+
+#####################################################
 ############  Bucket of Functions  ###################
-
+#####################################################
 
 
 def get_data(PID, tablename):
@@ -179,7 +220,6 @@ def first_pop_time(time):
     
     # i think this method is super slow
 def get_tokens(text):
-	print "tokenizing text"
 	lowers = text.lower()
 	no_punctuation = lowers.translate(None, string.punctuation)
 	tokens = nltk.word_tokenize(no_punctuation)
@@ -203,22 +243,22 @@ def get_tot_review_text(PID, tablename):
     return text
     
     ####is this method slow?
-def get_pop_review_text(PID, tablename):
-    rating, time = get_data(PID, tablename)
-    popmin, popmax = first_pop_time(time)
+def get_time_review_text(PID, tablename, timemin, timemax):
+    #rating, time = get_data(PID, tablename)
+    #popmin, popmax = first_pop_time(time)
     text = ''
     print "getting summaries"
-    sql = "Select RSummary From " +tablename + " Where PID = " + '"' + PID +'"' + ' and rtime > ' + str(popmin)+ " and rtime < " + str(popmax) + ";"
+    sql = "Select RSummary From " +tablename + " Where PID = " + '"' + PID +'"' + ' and rtime > ' + str(timemin)+ " and rtime < " + str(timemax) + ";"
     rtext = query_db(sql)
     rtext = tuple(x[0] for x in rtext)
     for string in rtext:
         text = text + string
-    sql = "Select RText From " +tablename + " Where PID = " + '"' + PID +'"' + ' and rtime > ' + str(popmin)+ " and rtime < " + str(popmax) + ";"
+    sql = "Select RText From " +tablename + " Where PID = " + '"' + PID +'"' + ' and rtime > ' + str(timemin)+ " and rtime < " + str(timemax) + ";"
     rtext = query_db(sql)
     rtext = tuple(x[0] for x in rtext)
     for string in rtext:
         text = text + string
-    return text, rtext, popmin
+    return text, rtext
     
 def best_bigram_collector(finder, n, ptitle):
 	prodlist = finder.nbest(bigram_measures.jaccard, n*10)

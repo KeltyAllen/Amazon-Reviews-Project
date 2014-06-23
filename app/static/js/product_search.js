@@ -82,7 +82,8 @@ $(function () {
 			.attr("class", "dot")
 			.attr("r", 3.5)
 			.attr("cx", xMap)
-			.attr("cy", yMap);
+			.attr("cy", yMap)
+			.style("opacity", .3);
 			//.style("fill", function(d) { return color(cValue(d));}) 
 			
 			//Put a title maybe
@@ -136,7 +137,16 @@ $(function () {
 				}); 
 		});
 		
-		
+
+		$("#input_dates_button").click(function() {
+				var time1 = $("#time1").val(); 
+				var time2 = $("#time2").val();
+				$.get( "/times/?time1="+time1+"&time2="+time2)
+				.done(function (data) {
+						//graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+				}); 
+		});
 		
 		
 		
