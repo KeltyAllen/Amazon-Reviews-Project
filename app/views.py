@@ -22,12 +22,6 @@ bigram_measures = nltk.collocations.BigramAssocMeasures()
 trigram_measures = nltk.collocations.TrigramAssocMeasures()
 
 
-# To create a database connection, add the following
-# within your view functions:
-# con = con_db(host, port, user, passwd, db)
-
-#from app.helpers.database import con_db, query_db
-#from app.helpers.filters import format_currency
 import jinja2
  
 def get_db():
@@ -56,7 +50,7 @@ def add_average_rating(data):
 @app.route('/')
 def index():
 	return render_template('index.html')
-	#return render_template('try.html')
+
  
 @app.route('/product/json/<product_id>')
 def product_details(product_id):  #which table? need to combine them before demo day probably
@@ -82,8 +76,11 @@ def product_details(product_id):  #which table? need to combine them before demo
 	add_average_rating(formatted_data)
 	
 	#Here I do the analysis to get the start of the popular time, and the 3 reviews that explain it some
-	#tot_text = get_tot_review_text(PID, tablename)
+
+######### THIS LOOKS LIKE AN UNNECESSARY DB CALL #############
 	rating, time = get_data(PID, tablename)
+########### CHECK ON THIS WHEN TIME ###################	
+	
 	popmin, popmax = first_pop_time(time)
 	pop_text, pop_revs = get_time_review_text(PID, tablename, popmin, popmax)
 	#print pop_text[:200], '\n'
@@ -157,14 +154,95 @@ def product_details(product_id):  #which table? need to combine them before demo
 
 @app.route('/times/')
 def get_reviews():
+	PID = ' ' + request.args['product']
 	time1 = request.args['time1']
 	time2 = request.args['time2']
 	time1 = dt.datetime.strptime(time1, "%Y/%m/%d")
 	time2 = dt.datetime.strptime(time2, "%Y/%m/%d")
-	time1 = min( time.mktime(time1.timetuple()), time.mktime(time2.timetuple()))
-	time2 = max( time.mktime(time1.timetuple()), time.mktime(time2.timetuple()))
+	print time1, time2
+	time1 = time.mktime(time1.timetuple())
+	time2 = time.mktime(time2.timetuple())
 	
-	return "HI!"
+	tablename =  'all_hk'
+	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
+	#ptitle?
+
+	#did they input a pid, title, or neither?
+	data = query_db(query)
+	
+	if data == "error":
+		print "not a pid"
+		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
+		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + ' Where PTitle like "%' +product_id + '%" GROUP BY PID Order by magnitude desc) as a LIMIT 10;'
+		prodlist = query_db(query)
+		PID = prodlist[0][0]
+		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
+		data = query_db(query)
+	
+	#rating, times = get_data(PID, tablename)
+	pop_text, pop_revs = get_time_review_text(PID, tablename, time1, time2)
+	
+
+	pop_tokens = get_tokens(pop_text)	
+	
+	sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
+	prodname = query_db(sql)
+	#print prodname
+	prodname = tuple(x[0] for x in prodname)
+	#print prodname
+	title = prodname[0]
+	prodname = get_tokens(prodname[0])
+	
+	finder = BigramCollocationFinder.from_words(pop_tokens)
+	finder.apply_freq_filter(4)
+	if finder:
+		bestbigrams = best_bigram_collector(finder, 5, prodname)
+
+	finder = TrigramCollocationFinder.from_words(pop_tokens)
+	if finder:
+		besttrigrams = best_trigram_collector(finder, 5, prodname)
+		
+	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
+
+	print len(pop_revs)
+	count = [0]*len(pop_revs)
+	i = 0
+	for rev in pop_revs:
+		if len(rev)>0:
+			for word in get_tokens(rev):
+				if word in keywords:
+					count[i] += 1
+			count[i] = float(count[i])/float(len(rev))
+			i += 1
+			
+	bestrevs = []
+	for x, i in enumerate(count):
+		if i in heapq.nlargest(3, count):
+			bestrevs.append(pop_revs[x])
+			
+			
+	boldrevs = []	
+	for rev in bestrevs:
+		hold = ''
+		for word in rev.split():
+			if string.lower(word.translate(None, string.punctuation)) in keywords:
+				hold = hold + " <b>"+word + "</b> "
+			else:
+				hold = hold + ' ' + word + ' '
+		if len(hold)<300:
+			boldrevs.append(hold)
+		else:
+			boldrevs.append(hold[:300] + "...")
+
+	charttitle = "Cumulative average reviews for " + title
+	#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
+
+	date1 = dt.datetime.fromtimestamp(time1)
+	date2 = dt.datetime.fromtimestamp(time2)
+	poplabel = "Reviews from <b>" + date1.strftime("%B") + " " + str(date1.year) + "</b> to <b>" + date2.strftime("%B") + " " + str(date2.year) + "</b>. " 
+
+	return jsonify(reviews = boldrevs, title = poplabel)
+	
 
 
 @app.route('/slides')

@@ -134,6 +134,8 @@ $(function () {
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
 				}); 
 		});
 		
@@ -141,7 +143,8 @@ $(function () {
 		$("#input_dates_button").click(function() {
 				var time1 = $("#time1").val(); 
 				var time2 = $("#time2").val();
-				$.get( "/times/?time1="+time1+"&time2="+time2)
+				var product = $("#product").val();
+				$.get( "/times/?time1="+time1+"&time2="+time2+"&product="+product)
 				.done(function (data) {
 						//graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
