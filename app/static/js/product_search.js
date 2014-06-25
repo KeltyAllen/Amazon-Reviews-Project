@@ -136,6 +136,7 @@ $(function () {
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
 						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
 				}); 
 		});
 		

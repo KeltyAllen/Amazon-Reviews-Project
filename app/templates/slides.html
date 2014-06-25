@@ -1,4 +1,4 @@
-{% extends "layout/base.html" %}
+{% extends "layout/slidesbase.html" %}
 
 {% block head %}
   <link href="{{ url_for('static', filename='vendor/components-revealjs/css/theme/default.css') }}" rel="stylesheet">
@@ -54,20 +54,27 @@
 <div>
         <br>
     </div>
-<div>Natural language processing using Python's NLTK library to select most representative reviews from a given time period</div>
-<div>
-    <br>
+    <div>
+        <font style="font-size: 32px;">Initial build on top of 1 GB Home &amp; Kitchen Database built with MySQL</font>
     </div>
+    <div>
+        <br>
+        </div>
+<div>Natural language processing using Python NLTK library to select most representative reviews from a given time period.</div>
+<div>Stemming, tokenizing, remove stop words (&amp; product-specific uninteresting words), find most common n-grams &amp; find short reviews that over-represent these n-grams</div>
+        <div>
+            <br>
+            </div>
 <div>Default time period is selected by having both local and global higher-than average review rates.&nbsp;</div>
-</section>
-<section class="" data-id="85658c72661da596fc42a85bfffad33f">&nbsp;<h2 class="absolute-element" style="position: absolute; width: 351px; height: 64px; z-index: 4; left: 248px; top: 70px;">Kelty Allen</h2>
+        </section>
+        <section class="" data-id="85658c72661da596fc42a85bfffad33f">&nbsp;<h2 class="absolute-element" style="position: absolute; width: 351px; height: 64px; z-index: 4; left: 248px; top: 70px;">Kelty Allen</h2>
 <div class="absolute-element" style="position: absolute; width: 227px; height: 229px; z-index: 4; left: 653px; top: 24px;">
 <img src="https://s3.amazonaws.com/media-p.slid.es/uploads/kelty/images/485163/berkeleyLogo.gif" style="width: 186.34657814434297px; height: 186.34657814434297px; max-height: none; max-width: none;">
-<br>
+        <br>
 </div>
 <img src="https://s3.amazonaws.com/media-p.slid.es/uploads/kelty/images/485158/MeBackpacking.jpg" style="width: 283px; height: 377px; max-height: none; max-width: none; position: absolute; z-index: 4; left: 97px; top: 215px;" class="absolute-element">
-<img src="https://s3.amazonaws.com/media-p.slid.es/uploads/kelty/images/485159/Screen_Shot_2014-06-22_at_9.38.01_PM.png" style="width: 408px; height: 360px; max-height: none; max-width: none; position: absolute; z-index: 4; left: 485px; top: 273px;" class="absolute-element">
-</section>
+        <img src="https://s3.amazonaws.com/media-p.slid.es/uploads/kelty/images/485159/Screen_Shot_2014-06-22_at_9.38.01_PM.png" style="width: 408px; height: 360px; max-height: none; max-width: none; position: absolute; z-index: 4; left: 485px; top: 273px;" class="absolute-element">
+    </section>
 </section>
 <section class="" data-id="ffc599c71659ded541e4c89cd11378a8" data-background-image="https://s3.amazonaws.com/media-p.slid.es/uploads/kelty/images/485040/Zojirushi.png">
     <h2>
@@ -117,7 +124,12 @@
 <span style="font-size: 36.00823211669922px; font-style: normal; font-variant: normal;">Can we see the effect of advertising and PR?</span>
 </div>
 </section>
-</div>{% endblock %}
+</div>
+
+
+
+
+{% endblock %}
 
 {% block scripts %}
   <!-- Presentation Libraries -->
