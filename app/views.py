@@ -189,14 +189,22 @@ def product_details(product_id):  #which table? need to combine them before demo
 
 	pop_tokens = get_tokens(pop_text)
 	
+	print "finder = bigramcollocationfinder"
 	finder = BigramCollocationFinder.from_words(pop_tokens)
+	print "finder.apply_freq"
 	finder.apply_freq_filter(4)
+	
+	
 	if finder:
+		print "bestbigrams"
 		bestbigrams = best_bigram_collector(finder, 5, title)
 
+	print "trigramcoll"
 	finder = TrigramCollocationFinder.from_words(pop_tokens)
 
+
 	if finder:
+		print "besttrigrams"
 		besttrigrams = best_trigram_collector(finder, 5, title)
 	
 	print bestbigrams, besttrigrams
