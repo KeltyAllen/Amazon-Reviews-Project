@@ -153,5 +153,18 @@ $(function () {
 		});
 		
 		
+		$("#zojirushi").click(function() {
+				var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+product)
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		
 		
 });

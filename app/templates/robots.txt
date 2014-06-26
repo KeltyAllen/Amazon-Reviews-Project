@@ -1,0 +1,3 @@
+$ cat ./melodymapr/app/static/robots.txt
+User-agent: *
+Disallow: /out/
