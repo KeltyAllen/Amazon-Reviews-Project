@@ -185,8 +185,11 @@ def product_details(product_id):  #which table? need to combine them before demo
 	print popmin, popmax
 
 	pop_text, pop_revs = get_time_review_text(data, popmin, popmax)
+
 	print len(pop_revs), len(data)
 
+
+	print "tokenizing"
 	pop_tokens = get_tokens(pop_text)
 	
 	print "finder = bigramcollocationfinder"
@@ -302,6 +305,11 @@ def get_time_review_text(data, timemin, timemax):
             maxindex = i
     returntext = []   
     print "minindex, maxindex are ", minindex, maxindex
+    
+    ###### limit to 200 reviews after min time
+    #### either adjust time input at website or remove this if isura's db is miraculously fast
+    if maxindex - minindex > 200:
+    	maxindex = minindex + 200
     
     for i in range(minindex, maxindex):
         returntext.append(rtext[i])
