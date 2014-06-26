@@ -154,8 +154,8 @@ $(function () {
 		
 		
 		$("#zojirushi").click(function() {
-				var product = $("#B0000X7CMQ").val(); 
-				$.get( "/examples/"+product)
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+"B0000X7CMQ")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -164,6 +164,68 @@ $(function () {
 						//$('#rowbackground').css("display", "block")
 				}); 
 		});
+		
+		$("#taylor").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+"B0000E2PEI")
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		
+		$("#airpurifier").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+"B00007E7RY")
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		$("#aeropress").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+"B000GXZ2GS")
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		$("#thermometer").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+"B0000DIU49")
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		$("#victorinox").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/examples/"+"B000638D32")
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
 		
 		
 		
