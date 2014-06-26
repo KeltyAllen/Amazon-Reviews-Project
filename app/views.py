@@ -40,121 +40,14 @@ def query_db(query):
 		return data
 	else:
 		return "error"
-	
-def add_average_rating(data):
-	total = 0
-	for index, datum in enumerate(data):
-		total += datum['rating']
-		datum['average_rating'] = total/(index+1)	
-
+		
 @app.route('/')
 def index():
 	return render_template('index.html')
 
- 
-@app.route('/product/json/<product_id>')
-def product_details(product_id):  #which table? need to combine them before demo day probably
-	
-	PID = ' ' + product_id
-	tablename =  'all_hk'
-	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-	#ptitle?
-
-	#did they input a pid, title, or neither?
-	data = query_db(query)
-	
-	if data == "error":
-		print "not a pid"
-		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
-		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product_id + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
-		prodlist = query_db(query)
-		print prodlist, prodlist[0], prodlist[0][0]
-		PID = prodlist[0][0]
-		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-		data = query_db(query)
-
-	formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
-	add_average_rating(formatted_data)
-	
-	#Here I do the analysis to get the start of the popular time, and the 3 reviews that explain it some
-
-######### THIS LOOKS LIKE AN UNNECESSARY DB CALL #############
-	rating, time = get_data(PID, tablename)
-########### CHECK ON THIS WHEN TIME ###################	
-	
-	popmin, popmax = first_pop_time(time)
-	pop_text, pop_revs = get_time_review_text(PID, tablename, popmin, popmax)
-	#print pop_text[:200], '\n'
-	
-
-	#tot_tokens = get_tokens(tot_text)
-	pop_tokens = get_tokens(pop_text)
-	
-	sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
-	prodname = query_db(sql)
-	#print prodname
-	prodname = tuple(x[0] for x in prodname)
-	#print prodname
-	title = prodname[0]
-	prodname = get_tokens(prodname[0])
-	#print prodname
-	
-	finder = BigramCollocationFinder.from_words(pop_tokens)
-	finder.apply_freq_filter(4)
-	if finder:
-		bestbigrams = best_bigram_collector(finder, 5, prodname)
-
-	finder = TrigramCollocationFinder.from_words(pop_tokens)
-	#finder.apply_freq_filter(2)
-	if finder:
-		besttrigrams = best_trigram_collector(finder, 5, prodname)
-		
-	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
-
-	print len(pop_revs)
-	count = [0]*len(pop_revs)
-	i = 0
-	for rev in pop_revs:
-		if len(rev)>0:
-			for word in get_tokens(rev):
-				if word in keywords:
-					count[i] += 1
-			count[i] = float(count[i])/float(len(rev))
-			i += 1
-			
-	bestrevs = []
-	for x, i in enumerate(count):
-		if i in heapq.nlargest(3, count):
-			bestrevs.append(pop_revs[x])
-			
-			
-	boldrevs = []	
-	for rev in bestrevs:
-		hold = ''
-		for word in rev.split():
-			if string.lower(word.translate(None, string.punctuation)) in keywords:
-				hold = hold + " <b>"+word + "</b> "
-			else:
-				hold = hold + ' ' + word + ' '
-		if len(hold)<300:
-			boldrevs.append(hold)
-		else:
-			boldrevs.append(hold[:300] + "...")
-
-	charttitle = "Cumulative average reviews for " + title
-	#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
-
-	date = dt.datetime.fromtimestamp(popmin)
-	poplabel = "This product became frequently reviewed starting <b>" + date.strftime("%B") + " " + str(date.year) + "</b>. " 
-
-	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
-	
-	
-	###   
-	
-
 @app.route('/times/')
 def get_reviews():
+	product = request.args['product']
 	PID = ' ' + request.args['product']
 	time1 = request.args['time1']
 	time2 = request.args['time2']
@@ -165,44 +58,52 @@ def get_reviews():
 	time2 = time.mktime(time2.timetuple())
 	
 	tablename =  'all_hk'
+	
 	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-	#ptitle?
-
+    
 	#did they input a pid, title, or neither?
 	data = query_db(query)
 	
 	if data == "error":
 		print "not a pid"
-		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
-		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + ' Where PTitle like "%' +product_id + '%" GROUP BY PID Order by magnitude desc) as a LIMIT 10;'
+		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product +'%" Limit 11'
+		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
 		prodlist = query_db(query)
 		PID = prodlist[0][0]
+		title = prodlist[0][1]
 		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
 		data = query_db(query)
-	
-	#rating, times = get_data(PID, tablename)
-	pop_text, pop_revs = get_time_review_text(PID, tablename, time1, time2)
-	
+	else:
+		sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
+		prodname = query_db(sql)
+		prodname = tuple(x[0] for x in prodname)
+		title = prodname[0]
 
-	pop_tokens = get_tokens(pop_text)	
+	#print title
+    
+	#formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
+	#add_average_rating(formatted_data)
 	
-	sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
-	prodname = query_db(sql)
-	#print prodname
-	prodname = tuple(x[0] for x in prodname)
-	#print prodname
-	title = prodname[0]
-	prodname = get_tokens(prodname[0])
+	#rating = np.array(zip(*data)[1], dtype = int)
+	#time = np.array(zip(*data)[0], dtype = float)
+	
+	pop_text, pop_revs = get_time_review_text(data, time1, time2)
+	print len(pop_revs), len(data)
+
+	pop_tokens = get_tokens(pop_text)
 	
 	finder = BigramCollocationFinder.from_words(pop_tokens)
 	finder.apply_freq_filter(4)
 	if finder:
-		bestbigrams = best_bigram_collector(finder, 5, prodname)
+		bestbigrams = best_bigram_collector(finder, 5, title)
 
 	finder = TrigramCollocationFinder.from_words(pop_tokens)
+
 	if finder:
-		besttrigrams = best_trigram_collector(finder, 5, prodname)
-		
+		besttrigrams = best_trigram_collector(finder, 5, title)
+	
+	#print bestbigrams, besttrigrams
+	
 	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
 
 	print len(pop_revs)
@@ -215,14 +116,15 @@ def get_reviews():
 					count[i] += 1
 			count[i] = float(count[i])/float(len(rev))
 			i += 1
-			
+	
+	
 	bestrevs = []
 	for x, i in enumerate(count):
 		if i in heapq.nlargest(3, count):
 			bestrevs.append(pop_revs[x])
-			
-			
-	boldrevs = []	
+	
+	
+	boldrevs = []
 	for rev in bestrevs:
 		hold = ''
 		for word in rev.split():
@@ -236,7 +138,7 @@ def get_reviews():
 			boldrevs.append(hold[:300] + "...")
 
 	charttitle = "Cumulative average reviews for " + title
-	#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
+#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
 
 	date1 = dt.datetime.fromtimestamp(time1)
 	date2 = dt.datetime.fromtimestamp(time2)
@@ -244,12 +146,109 @@ def get_reviews():
 
 	return jsonify(reviews = boldrevs, title = poplabel)
 	
+ 
+@app.route('/product/json/<product_id>')
+def product_details(product_id):  #which table? need to combine them before demo day probably
+	#product_id = 'B0000X7CMQ'
+	
+	PID = ' ' + product_id
+	tablename =  'all_hk'
+	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
+    
+	#did they input a pid, title, or neither?
+	data = query_db(query)
+	
+	if data == "error":
+		print "not a pid"
+		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
+		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product_id + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
+		prodlist = query_db(query)
+		PID = prodlist[0][0]
+		title = prodlist[0][1]
+		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
+		data = query_db(query)
+	else:
+		sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
+		prodname = query_db(sql)
+		prodname = tuple(x[0] for x in prodname)
+		title = prodname[0]
 
+	print title
+    
+	formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
+	add_average_rating(formatted_data)
+	
+	rating = np.array(zip(*data)[1], dtype = int)
+	time = np.array(zip(*data)[0], dtype = float)
 
+	popmin, popmax = first_pop_time(time)
+	print popmin, popmax
+
+	pop_text, pop_revs = get_time_review_text(data, popmin, popmax)
+	print len(pop_revs), len(data)
+
+	pop_tokens = get_tokens(pop_text)
+	
+	finder = BigramCollocationFinder.from_words(pop_tokens)
+	finder.apply_freq_filter(4)
+	if finder:
+		bestbigrams = best_bigram_collector(finder, 5, title)
+
+	finder = TrigramCollocationFinder.from_words(pop_tokens)
+
+	if finder:
+		besttrigrams = best_trigram_collector(finder, 5, title)
+	
+	print bestbigrams, besttrigrams
+	
+	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
+
+	print len(pop_revs)
+	count = [0]*len(pop_revs)
+	i = 0
+	for rev in pop_revs:
+		if len(rev)>0:
+			for word in get_tokens(rev):
+				if word in keywords:
+					count[i] += 1
+			count[i] = float(count[i])/float(len(rev))
+			i += 1
+	
+	
+	bestrevs = []
+	for x, i in enumerate(count):
+		if i in heapq.nlargest(3, count):
+			bestrevs.append(pop_revs[x])
+	
+	
+	boldrevs = []
+	for rev in bestrevs:
+		hold = ''
+		for word in rev.split():
+			if string.lower(word.translate(None, string.punctuation)) in keywords:
+				hold = hold + " <b>"+word + "</b> "
+			else:
+				hold = hold + ' ' + word + ' '
+		if len(hold)<300:
+			boldrevs.append(hold)
+		else:
+			boldrevs.append(hold[:300] + "...")
+
+	charttitle = "Cumulative average reviews for " + title
+#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
+
+	date = dt.datetime.fromtimestamp(popmin)
+	poplabel = "This product became frequently reviewed starting <b>" + date.strftime("%B") + " " + str(date.year) + "</b>. " 
+
+	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
+	
+	
+	
+	
 @app.route('/slides')
 def about():
     # Renders slides.html.
-    return render_template('slides.html')
+    return render_template('slides.html')  # Renders slides.html.
 
 @app.route('/author')
 def contact():
@@ -271,17 +270,39 @@ def static_from_root():
 ###############################################################################################
 ############  Bucket of Functions  #############################################################
 ###############################################################################################
+	
+def get_time_review_text(data, timemin, timemax):
+    #rating, time = get_data(PID, tablename)
+    #popmin, popmax = first_pop_time(time)
+    text = ''
+    rtext = np.array(zip(*data)[3])
+    times = np.array(zip(*data)[0], dtype = float)
+    minindex = 0
+    maxindex = len(data)-1
 
-
-def get_data(PID, tablename):
-    sql = "Select RTime, RScore From " +tablename + " Where PID = " + '"' + PID +'";'    
-    data = query_db(sql)
-    data = sorted(data)
-    rating = np.array(zip(*data)[1], dtype = int)
-    time = np.array(zip(*data)[0], dtype = float)
-    #dates=[dt.datetime.fromtimestamp(ts) for ts in time]
-    return rating, time#, dates
-
+    timemin = float(timemin)
+    timemax = float(timemax)
+    print "comparing to ", timemin, timemax
+    #gets index of first time above timemin as min index
+    #gets first index below timemax as max index
+    for i in range(len(times)):
+        if times[i]<timemin:
+            #print i
+            minindex = i+1
+        if times[i] <= timemax:
+            #print i
+            maxindex = i
+    returntext = []   
+    print "minindex, maxindex are ", minindex, maxindex
+    
+    for i in range(minindex, maxindex):
+        returntext.append(rtext[i])
+    for string in returntext:
+        text = text + string
+    print len(returntext)   
+    return text, returntext	
+	
+	
 def first_pop_time(time): 
     firstpopmin = time[0]
     firstpopmax = time[len(time)-1]
@@ -297,9 +318,7 @@ def first_pop_time(time):
     #dates=[dt.datetime.fromtimestamp(ts) for ts in time]
     print dt.datetime.fromtimestamp(firstpopmin), dt.datetime.fromtimestamp(firstpopmax)
     return firstpopmin, firstpopmax
-    
-    
-    # i think this method is super slow
+	
 def get_tokens(text):
 	lowers = text.lower()
 	no_punctuation = lowers.translate(None, string.punctuation)
@@ -307,41 +326,8 @@ def get_tokens(text):
 	filtered = [w for w in tokens if not w in stopwords.words('english')]
 	filtered = [w for w in filtered if not w in ['used', 'use', 'easy', 'product']]
 	return filtered
-
-def get_tot_review_text(PID, tablename):
-    rating, time = get_data(PID, tablename)
-    popmin, popmax = first_pop_time(time)
-    text = ''
-    sql = "Select RSummary From " +tablename + " Where PID = " + '"' + PID +'"' + " and rtime < " + str(popmax) + ";"
-    rtext = query_db(sql)
-    rtext = tuple(x[0] for x in rtext)
-    for string in rtext:
-        text = text + string
-    sql = "Select RText From " +tablename + " Where PID = " + '"' + PID +'"' + " and rtime < " + str(popmax) + ";"
-    rtext = query_db(sql)
-    rtext = tuple(x[0] for x in rtext)
-    for string in rtext:
-        text = text + string
-    return text
-    
-    ####is this method slow?
-def get_time_review_text(PID, tablename, timemin, timemax):
-    #rating, time = get_data(PID, tablename)
-    #popmin, popmax = first_pop_time(time)
-    text = ''
-    print "getting summaries"
-    sql = "Select RSummary From " +tablename + " Where PID = " + '"' + PID +'"' + ' and rtime > ' + str(timemin)+ " and rtime < " + str(timemax) + ";"
-    rtext = query_db(sql)
-    rtext = tuple(x[0] for x in rtext)
-    for string in rtext:
-        text = text + string
-    sql = "Select RText From " +tablename + " Where PID = " + '"' + PID +'"' + ' and rtime > ' + str(timemin)+ " and rtime < " + str(timemax) + ";"
-    rtext = query_db(sql)
-    rtext = tuple(x[0] for x in rtext)
-    for string in rtext:
-        text = text + string
-    return text, rtext
-    
+	
+	
 def best_bigram_collector(finder, n, ptitle):
 	prodlist = finder.nbest(bigram_measures.jaccard, n*10)
 	#print "in the function: ", ptitle
@@ -374,7 +360,7 @@ def best_bigram_collector(finder, n, ptitle):
     
 def best_trigram_collector(finder, n, ptitle):
     prodlist = finder.nbest(trigram_measures.raw_freq, n*10)
-    #ptitle = get_tokens(str(ptitle))
+    ptitle = get_tokens(str(ptitle))
     #ptitle.append("used")
     bests = []
     count = 0
@@ -396,7 +382,11 @@ def best_trigram_collector(finder, n, ptitle):
             break;
     return bests
     
-    
+def add_average_rating(data):
+	total = 0
+	for index, datum in enumerate(data):
+		total += datum['rating']
+		datum['average_rating'] = total/(index+1)   
     
 
 ### do i even need this anymore? 
@@ -405,109 +395,4 @@ def stem_tokens(tokens, stemmer):
     for item in tokens:
         stemmed.append(stemmer.stem(item))
     return stemmed
-    
-    
-    
-    
-    
-##################################################################################################################################
-############################ EXACT COPY OF /PRODUCT/JSON/<PRODUCT_ID>  DO THIS BETTER ############################
-################################################################################################################
-    
-    
-@app.route('/examples/<product_id>')
-def example(product_id):  #which table? need to combine them before demo day probably
-	
-	PID = ' ' + product_id
-	tablename =  'examples'
-	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-	#ptitle?
-
-	#did they input a pid, title, or neither?
-	data = query_db(query)
-	
-	if data == "error":
-		print "not a pid"
-		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
-		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + ' Where PTitle like "%' +product_id + '%" GROUP BY PID Order by magnitude desc) as a LIMIT 10;'
-		prodlist = query_db(query)
-		PID = prodlist[0][0]
-		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-		data = query_db(query)
-
-	formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
-	add_average_rating(formatted_data)
-	
-	#Here I do the analysis to get the start of the popular time, and the 3 reviews that explain it some
-
-######### THIS LOOKS LIKE AN UNNECESSARY DB CALL #############
-	rating, time = get_data(PID, tablename)
-########### CHECK ON THIS WHEN TIME ###################	
-	
-	popmin, popmax = first_pop_time(time)
-	pop_text, pop_revs = get_time_review_text(PID, tablename, popmin, popmax)
-	#print pop_text[:200], '\n'
-	
-
-	#tot_tokens = get_tokens(tot_text)
-	pop_tokens = get_tokens(pop_text)
-	
-	sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
-	prodname = query_db(sql)
-	#print prodname
-	prodname = tuple(x[0] for x in prodname)
-	#print prodname
-	title = prodname[0]
-	prodname = get_tokens(prodname[0])
-	#print prodname
-	
-	finder = BigramCollocationFinder.from_words(pop_tokens)
-	finder.apply_freq_filter(4)
-	if finder:
-		bestbigrams = best_bigram_collector(finder, 5, prodname)
-
-	finder = TrigramCollocationFinder.from_words(pop_tokens)
-	#finder.apply_freq_filter(2)
-	if finder:
-		besttrigrams = best_trigram_collector(finder, 5, prodname)
-		
-	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
-
-	print len(pop_revs)
-	count = [0]*len(pop_revs)
-	i = 0
-	for rev in pop_revs:
-		if len(rev)>0:
-			for word in get_tokens(rev):
-				if word in keywords:
-					count[i] += 1
-			count[i] = float(count[i])/float(len(rev))
-			i += 1
-			
-	bestrevs = []
-	for x, i in enumerate(count):
-		if i in heapq.nlargest(3, count):
-			bestrevs.append(pop_revs[x])
-			
-			
-	boldrevs = []	
-	for rev in bestrevs:
-		hold = ''
-		for word in rev.split():
-			if string.lower(word.translate(None, string.punctuation)) in keywords:
-				hold = hold + " <b>"+word + "</b> "
-			else:
-				hold = hold + ' ' + word + ' '
-		if len(hold)<300:
-			boldrevs.append(hold)
-		else:
-			boldrevs.append(hold[:300] + "...")
-
-	charttitle = "Cumulative average reviews for " + title
-	#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
-
-	date = dt.datetime.fromtimestamp(popmin)
-	poplabel = "This product became frequently reviewed starting <b>" + date.strftime("%B") + " " + str(date.year) + "</b>. " 
-
-	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
 	
