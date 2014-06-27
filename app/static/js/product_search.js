@@ -155,6 +155,7 @@ $(function () {
 		
 		$("#zojirushi").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("B0000X7CMQ");
 				$.get( "/product/json/"+"B0000X7CMQ")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -166,7 +167,8 @@ $(function () {
 		});
 		
 		$("#taylor").click(function() {
-				//var product = $("#B0000X7CMQ").val(); 
+				//var product = $("#B0000X7CMQ").val();
+				$("#product").val("B0000E2PEI");
 				$.get( "/product/json/"+"B0000E2PEI")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -180,6 +182,7 @@ $(function () {
 		
 		$("#airpurifier").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("B00007E7RY");
 				$.get( "/product/json/"+"B00007E7RY")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -192,6 +195,7 @@ $(function () {
 		
 		$("#hamiltonbeach").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("B000FHQJ6C");
 				$.get( "/product/json/"+"B000FHQJ6C")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -203,7 +207,8 @@ $(function () {
 		});
 		
 		$("#thermometer").click(function() {
-				//var product = $("#B0000X7CMQ").val(); 
+				//var product = $("#B0000X7CMQ").val();
+				$("#product").val("B0000DIU49");
 				$.get( "/product/json/"+"B0000DIU49")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -216,6 +221,7 @@ $(function () {
 		
 		$("#victorinox").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("B000638D32");
 				$.get( "/product/json/"+"B000638D32")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -228,6 +234,7 @@ $(function () {
 		
 		$("#wabash").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("B00004SU35");
 				$.get( "/product/json/"+"B00004SU35")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
@@ -237,6 +244,8 @@ $(function () {
 						//$('#rowbackground').css("display", "block")
 				}); 
 		});
+	
 		
+
 		
 });

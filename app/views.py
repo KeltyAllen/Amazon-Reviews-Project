@@ -255,7 +255,7 @@ def product_details(product_id):  #which table? need to combine them before demo
 	poplabel = "This product became frequently reviewed starting <strong>" + date.strftime("%B") + " " + str(date.year) + "</strong>. " 
 	if titleflag == 1:
 		if len(prodlist) > 1:
-			suggestions = "Did you mean " + prodlist[1][1] + " (PID: " + prodlist[1][0]
+			suggestions = "Or did you mean " + prodlist[1][1] + " (PID: " + prodlist[1][0]
 			for i in range(2, min(len(prodlist), 4)):
 				suggestions = suggestions + ") or " + prodlist[i][1] + " (PID: " + prodlist[i][0] 
 			poplabel = suggestions +")?" + "<br><br>" + poplabel
