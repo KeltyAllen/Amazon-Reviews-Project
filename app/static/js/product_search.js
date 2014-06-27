@@ -190,9 +190,9 @@ $(function () {
 				}); 
 		});
 		
-		$("#aeropress").click(function() {
+		$("#hamiltonbeach").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$.get( "/product/json/"+"B000GXZ2GS")
+				$.get( "/product/json/"+"B000FHQJ6C")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -226,7 +226,17 @@ $(function () {
 				}); 
 		});
 		
-		
+		$("#wabash").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$.get( "/product/json/"+"B00004SU35")
+				.done(function (data) {
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
 		
 		
 });

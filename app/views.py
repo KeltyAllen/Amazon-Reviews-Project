@@ -47,6 +47,7 @@ def index():
 
 @app.route('/times/')
 def get_reviews():
+
 	product = request.args['product']
 	PID = ' ' + request.args['product']
 	time1 = request.args['time1']
@@ -65,6 +66,7 @@ def get_reviews():
 	data = query_db(query)
 	
 	if data == "error":
+
 		print "not a pid"
 		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product +'%" Limit 11'
 		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
@@ -150,7 +152,7 @@ def get_reviews():
 @app.route('/product/json/<product_id>')
 def product_details(product_id):  #which table? need to combine them before demo day probably
 	#product_id = 'B0000X7CMQ'
-	
+	titleflag = 0
 	PID = ' ' + product_id
 	tablename =  'all_hk'
 	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
@@ -159,6 +161,7 @@ def product_details(product_id):  #which table? need to combine them before demo
 	data = query_db(query)
 	
 	if data == "error":
+		titleflag = 1
 		print "not a pid"
 		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
 		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product_id + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
@@ -250,7 +253,15 @@ def product_details(product_id):  #which table? need to combine them before demo
 
 	date = dt.datetime.fromtimestamp(popmin)
 	poplabel = "This product became frequently reviewed starting <b>" + date.strftime("%B") + " " + str(date.year) + "</b>. " 
+	if titleflag == 1:
+		if len(prodlist) > 1:
+			suggestions = "Did you mean " + prodlist[1][1] + " (PID: " + prodlist[1][0]
+			for i in range(2, min(len(prodlist), 4)):
+				suggestions = suggestions + ") or " + prodlist[i][1] + " (PID: " + prodlist[i][0] 
+			poplabel = suggestions +")?" + "<br><br>" + poplabel
 
+		
+		
 	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
 	
 	
