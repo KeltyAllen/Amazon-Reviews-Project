@@ -9,6 +9,7 @@ body {
     -moz-background-size: cover;
     -o-background-size: cover;
     background-size: cover;
+	font-family: 'Raleway', sans-serif;
 	/*color:#fff;*/
   	background-color:#333;
 	/*opacity: 0.2; filter: alpha(opacity=20);*/

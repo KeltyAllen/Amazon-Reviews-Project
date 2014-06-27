@@ -1,8 +1,8 @@
 $(function () {
 		
-		var margin = {top: 20, right: 20, bottom: 30, left: 40},
+		var margin = {top: 30, right: 20, bottom: 30, left: 40},
     width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    height = 500 - margin.top - margin.bottom;
 		
 		var graphData = function (data, prodname) {
 			$("#graph_container").empty();
@@ -49,7 +49,7 @@ $(function () {
 			var oneMonthMilliseconds = 30 * 24 * 60 * 60 * 1000;
 			var xAxisStartDate = new Date(d3.min(data, xValue).getTime() - oneMonthMilliseconds);
 			xScale.domain([xAxisStartDate, d3.max(data, xValue)]);
-			yScale.domain([1, 5]);
+			yScale.domain([1, 5.5]);
 			
 			// x-axis
 			svg.append("g")

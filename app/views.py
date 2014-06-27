@@ -131,7 +131,7 @@ def get_reviews():
 		hold = ''
 		for word in rev.split():
 			if string.lower(word.translate(None, string.punctuation)) in keywords:
-				hold = hold + " <b>"+word + "</b> "
+				hold = hold + " <strong>"+word + "</strong> "
 			else:
 				hold = hold + ' ' + word + ' '
 		if len(hold)<300:
@@ -144,7 +144,7 @@ def get_reviews():
 
 	date1 = dt.datetime.fromtimestamp(time1)
 	date2 = dt.datetime.fromtimestamp(time2)
-	poplabel = "Reviews from <b>" + date1.strftime("%B") + " " + str(date1.year) + "</b> to <b>" + date2.strftime("%B") + " " + str(date2.year) + "</b>. " 
+	poplabel = "Reviews from <strong>" + date1.strftime("%B") + " " + str(date1.year) + "</strong> to <strong>" + date2.strftime("%B") + " " + str(date2.year) + "</strong>. " 
 
 	return jsonify(reviews = boldrevs, title = poplabel)
 	
@@ -240,7 +240,7 @@ def product_details(product_id):  #which table? need to combine them before demo
 		hold = ''
 		for word in rev.split():
 			if string.lower(word.translate(None, string.punctuation)) in keywords:
-				hold = hold + " <b>"+word + "</b> "
+				hold = hold + " <strong>"+word + "</strong> "
 			else:
 				hold = hold + ' ' + word + ' '
 		if len(hold)<300:
@@ -252,7 +252,7 @@ def product_details(product_id):  #which table? need to combine them before demo
 #title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
 
 	date = dt.datetime.fromtimestamp(popmin)
-	poplabel = "This product became frequently reviewed starting <b>" + date.strftime("%B") + " " + str(date.year) + "</b>. " 
+	poplabel = "This product became frequently reviewed starting <strong>" + date.strftime("%B") + " " + str(date.year) + "</strong>. " 
 	if titleflag == 1:
 		if len(prodlist) > 1:
 			suggestions = "Did you mean " + prodlist[1][1] + " (PID: " + prodlist[1][0]
