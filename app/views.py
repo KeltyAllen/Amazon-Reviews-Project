@@ -1,12 +1,15 @@
 from flask import render_template, _app_ctx_stack, jsonify, request
 from app import app, host, port, user, passwd, db
 from app.helpers.database import con_db
-#import numpy as np
-#import matplotlib.pyplot as plt
 import MySQLdb
 import sys
-import simplejson
+import json
 import numpy as np
+from urllib2 import Request, urlopen, URLError
+import urllib
+
+
+from eventlet.timeout import Timeout, with_timeout
 
 import nltk
 from nltk.collocations import *
@@ -41,9 +44,22 @@ def query_db(query):
 	else:
 		return "error"
 		
+def query_isura_db(address):
+	try:
+		#response = with_timeout(2, urlopen, address, timeout_value="")
+		response = urlopen(address, None, 2)
+	except:
+		return "error"
+		
+
+###############################################################################################
+		
 @app.route('/')
 def index():
 	return render_template('index.html')
+
+
+###############################################################################################
 
 @app.route('/times/')
 def get_reviews():
@@ -57,215 +73,78 @@ def get_reviews():
 	print time1, time2
 	time1 = time.mktime(time1.timetuple())
 	time2 = time.mktime(time2.timetuple())
-	
-	tablename =  'all_hk'
-	
-	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-    
-	#did they input a pid, title, or neither?
-	data = query_db(query)
-	
-	if data == "error":
 
-		print "not a pid"
-		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product +'%" Limit 11'
-		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
+	#query isura's db?
+	#htmlstring =  'http://54.183.117.174:5000/api/v0.1/reviews/' + urllib.quote(product_id)
+	#print htmlstring
+	#answer= query_isura_db(htmlstring)
+	
+	answer = "error"
+	
+	if (answer == "error"):
+		#### querying my rds home & kitchen database
+		tablename =  'all_hk'
+		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like '" +PID + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
 		prodlist = query_db(query)
 		PID = prodlist[0][0]
 		title = prodlist[0][1]
 		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
 		data = query_db(query)
+		boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)	
 	else:
-		sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
-		prodname = query_db(sql)
-		prodname = tuple(x[0] for x in prodname)
-		title = prodname[0]
+		jsondata = json.load(answer)
+		###now need to get data, which has data[0] is time list, data[1] is scores, data[2] isn't used anymore (userid?), data[3] is text
+		#
+		#title = product
+		#boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)
 
-	#print title
-    
-	#formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
-	#add_average_rating(formatted_data)
-	
-	#rating = np.array(zip(*data)[1], dtype = int)
-	#time = np.array(zip(*data)[0], dtype = float)
-	
-	pop_text, pop_revs = get_time_review_text(data, time1, time2)
-	print len(pop_revs), len(data)
 
-	pop_tokens = get_tokens(pop_text)
-	
-	finder = BigramCollocationFinder.from_words(pop_tokens)
-	finder.apply_freq_filter(4)
-	if finder:
-		bestbigrams = best_bigram_collector(finder, 5, title)
-
-	finder = TrigramCollocationFinder.from_words(pop_tokens)
-
-	if finder:
-		besttrigrams = best_trigram_collector(finder, 5, title)
-	
-	#print bestbigrams, besttrigrams
-	
-	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
-
-	print len(pop_revs)
-	count = [0]*len(pop_revs)
-	i = 0
-	for rev in pop_revs:
-		if len(rev)>0:
-			for word in get_tokens(rev):
-				if word in keywords:
-					count[i] += 1
-			count[i] = float(count[i])/float(len(rev))
-			i += 1
-	
-	
-	bestrevs = []
-	for x, i in enumerate(count):
-		if i in heapq.nlargest(3, count):
-			bestrevs.append(pop_revs[x])
-	
-	
-	boldrevs = []
-	for rev in bestrevs:
-		hold = ''
-		for word in rev.split():
-			if string.lower(word.translate(None, string.punctuation)) in keywords:
-				hold = hold + " <strong>"+word + "</strong> "
-			else:
-				hold = hold + ' ' + word + ' '
-		if len(hold)<300:
-			boldrevs.append(hold)
-		else:
-			boldrevs.append(hold[:300] + "...")
-
-	charttitle = "Cumulative average reviews for " + title
-#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
-
-	date1 = dt.datetime.fromtimestamp(time1)
-	date2 = dt.datetime.fromtimestamp(time2)
-	poplabel = "Reviews from <strong>" + date1.strftime("%B") + " " + str(date1.year) + "</strong> to <strong>" + date2.strftime("%B") + " " + str(date2.year) + "</strong>. " 
-
+	#boldrevs, poplabel = home_kitchen_time(PID, time1, time2)
 	return jsonify(reviews = boldrevs, title = poplabel)
 	
+
+###############################################################################################
  
 @app.route('/product/json/<product_id>')
 def product_details(product_id):  #which table? need to combine them before demo day probably
-	#product_id = 'B0000X7CMQ'
-	titleflag = 0
-	PID = ' ' + product_id
-	tablename =  'all_hk'
-	query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-    
-	#did they input a pid, title, or neither?
-	data = query_db(query)
 	
-	if data == "error":
-		titleflag = 1
-		print "not a pid"
-		#query = "Select PID, PTitle From " + tablename +" Where PTitle Like "  +'"%' + product_id +'%" Limit 11'
+	#Isura's database is up! Woo!
+	#Hmm. Often not up. Or super slow? 
+	#The following code will get the data as a json file from isura's db, or catch an error if db is down
+	#
+	#keep this code:
+	#htmlstring =  'http://54.183.117.174:5000/api/v0.1/reviews/' + urllib.quote(product_id)
+	#print htmlstring
+	#answer= query_isura_db(htmlstring)
+	#keep this code ^
+	
+	
+
+	#currently only using my database. 
+	answer = "error"
+	if (answer == "error"):
+		#### querying my rds home & kitchen database
+		tablename =  'all_hk'
 		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product_id + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
 		prodlist = query_db(query)
 		PID = prodlist[0][0]
 		title = prodlist[0][1]
 		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
 		data = query_db(query)
+		formatted_data, title, boldrevs, poplabel = home_kitchen_data(data, title)	
 	else:
-		sql = "Select distinct PTitle from " + tablename +" where PID = " + '"' + PID + '";'
-		prodname = query_db(sql)
-		prodname = tuple(x[0] for x in prodname)
-		title = prodname[0]
-
-	print title
-    
-	formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
-	add_average_rating(formatted_data)
-	
-	rating = np.array(zip(*data)[1], dtype = int)
-	time = np.array(zip(*data)[0], dtype = float)
-
-	popmin, popmax = first_pop_time(time)
-	print popmin, popmax
-
-	pop_text, pop_revs = get_time_review_text(data, popmin, popmax)
-
-	print len(pop_revs), len(data)
-
-
-	print "tokenizing"
-	pop_tokens = get_tokens(pop_text)
-	
-	print "finder = bigramcollocationfinder"
-	finder = BigramCollocationFinder.from_words(pop_tokens)
-	print "finder.apply_freq"
-	finder.apply_freq_filter(4)
-	
-	
-	if finder:
-		print "bestbigrams"
-		bestbigrams = best_bigram_collector(finder, 5, title)
-
-	print "trigramcoll"
-	finder = TrigramCollocationFinder.from_words(pop_tokens)
-
-
-	if finder:
-		print "besttrigrams"
-		besttrigrams = best_trigram_collector(finder, 5, title)
-	
-	print bestbigrams, besttrigrams
-	
-	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
-
-	print len(pop_revs)
-	count = [0]*len(pop_revs)
-	i = 0
-	for rev in pop_revs:
-		if len(rev)>0:
-			for word in get_tokens(rev):
-				if word in keywords:
-					count[i] += 1
-			count[i] = float(count[i])/float(len(rev))
-			i += 1
-	
-	
-	bestrevs = []
-	for x, i in enumerate(count):
-		if i in heapq.nlargest(3, count):
-			bestrevs.append(pop_revs[x])
-	
-	
-	boldrevs = []
-	for rev in bestrevs:
-		hold = ''
-		for word in rev.split():
-			if string.lower(word.translate(None, string.punctuation)) in keywords:
-				hold = hold + " <strong>"+word + "</strong> "
-			else:
-				hold = hold + ' ' + word + ' '
-		if len(hold)<300:
-			boldrevs.append(hold)
-		else:
-			boldrevs.append(hold[:300] + "...")
-
-	charttitle = "Cumulative average reviews for " + title
-#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
-
-	date = dt.datetime.fromtimestamp(popmin)
-	poplabel = "This product became frequently reviewed starting <strong>" + date.strftime("%B") + " " + str(date.year) + "</strong>. " 
-	if titleflag == 1:
-		if len(prodlist) > 1:
-			suggestions = "Or did you mean " + prodlist[1][1] + " (PID: " + prodlist[1][0]
-			for i in range(2, min(len(prodlist), 4)):
-				suggestions = suggestions + ") or " + prodlist[i][1] + " (PID: " + prodlist[i][0] 
-			poplabel = suggestions +")?" + "<br><br>" + poplabel
-
-		
-		
+		jsondata = json.load(answer)
+		###now need to get data, which has data[0] is time list, data[1] is scores, data[2] isn't used anymore (userid?), data[3] is text
+		#
+		#title = product_id
+		#formatted_data, title, boldrevs, poplabel = home_kitchen_data(data, title)
+			
+			
 	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
 	
 	
-	
+
+###############################################################################################	
 	
 @app.route('/slides')
 def about():
@@ -288,10 +167,14 @@ def internal_error(error):
 @app.route('/robots.txt')
 def static_from_root():
       return send_from_directory(app.static_folder, request.path[1:])
+      
 
 ###############################################################################################
 ############  Bucket of Functions  #############################################################
 ###############################################################################################
+			
+	
+	
 	
 def get_time_review_text(data, timemin, timemax):
     #rating, time = get_data(PID, tablename)
@@ -422,4 +305,176 @@ def stem_tokens(tokens, stemmer):
     for item in tokens:
         stemmed.append(stemmer.stem(item))
     return stemmed
+	
+
+###############################################################################################
+	
+##### These used to be main @app.route things, like ('/product/json/<product_id>')and the time one. 
+##### The main calculations happen here. 
+###### Lots of redundancy between these two functions, clean them up. 
+
+def home_kitchen_data(data, title):
+	
+    
+    
+  ## gets time, rating, average rating in a dict
+	formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
+	add_average_rating(formatted_data)
+	
+	rating = np.array(zip(*data)[1], dtype = int)
+	time = np.array(zip(*data)[0], dtype = float)
+
+	popmin, popmax = first_pop_time(time)
+	print popmin, popmax
+
+	pop_text, pop_revs = get_time_review_text(data, popmin, popmax)
+
+	print len(pop_revs), len(data)
+
+
+	print "tokenizing"
+	pop_tokens = get_tokens(pop_text)
+	
+	print "finder = bigramcollocationfinder"
+	finder = BigramCollocationFinder.from_words(pop_tokens)
+	print "finder.apply_freq"
+	finder.apply_freq_filter(4)
+	
+	
+	if finder:
+		print "bestbigrams"
+		bestbigrams = best_bigram_collector(finder, 5, title)
+
+	print "trigramcoll"
+	finder = TrigramCollocationFinder.from_words(pop_tokens)
+
+
+	if finder:
+		print "besttrigrams"
+		besttrigrams = best_trigram_collector(finder, 5, title)
+	
+	print bestbigrams, besttrigrams
+	
+	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
+
+	print len(pop_revs)
+	count = [0]*len(pop_revs)
+	i = 0
+	for rev in pop_revs:
+		if len(rev)>0:
+			for word in get_tokens(rev):
+				if word in keywords:
+					count[i] += 1
+			count[i] = float(count[i])/float(len(rev))
+			i += 1
+	
+	
+	bestrevs = []
+	for x, i in enumerate(count):
+		if i in heapq.nlargest(3, count):
+			bestrevs.append(pop_revs[x])
+	
+	
+	boldrevs = []
+	for rev in bestrevs:
+		hold = ''
+		for word in rev.split():
+			if string.lower(word.translate(None, string.punctuation)) in keywords:
+				hold = hold + " <strong>"+word + "</strong> "
+			else:
+				hold = hold + ' ' + word + ' '
+		if len(hold)<300:
+			boldrevs.append(hold)
+		else:
+			boldrevs.append(hold[:300] + "...")
+
+	charttitle = "Cumulative average reviews for " + title
+#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
+
+	date = dt.datetime.fromtimestamp(popmin)
+	poplabel = "This product became frequently reviewed starting <strong>" + date.strftime("%B") + " " + str(date.year) + "</strong>. " 
+	
+	#Used to do a "did you mean", but no longer do
+	
+	#if titleflag == 1:
+		#if len(prodlist) > 1:
+			#suggestions = "Or did you mean " + prodlist[1][1] + " (PID: " + prodlist[1][0]
+			#for i in range(2, min(len(prodlist), 4)):
+				#suggestions = suggestions + ") or " + prodlist[i][1] + " (PID: " + prodlist[i][0] 
+			#poplabel = suggestions +")?" + "<br><br>" + poplabel	
+			
+	return formatted_data, title, boldrevs, poplabel
+	
+
+###############################################################################################
+	
+def home_kitchen_time(data, title, time1, time2):
+	
+
+	#print title
+    
+	#formatted_data = map(lambda d: {'time': d[0], 'rating':d[1]}, data)
+	#add_average_rating(formatted_data)
+	
+	#rating = np.array(zip(*data)[1], dtype = int)
+	#time = np.array(zip(*data)[0], dtype = float)
+	
+	pop_text, pop_revs = get_time_review_text(data, time1, time2)
+	print len(pop_revs), len(data)
+
+	pop_tokens = get_tokens(pop_text)
+	
+	finder = BigramCollocationFinder.from_words(pop_tokens)
+	finder.apply_freq_filter(4)
+	if finder:
+		bestbigrams = best_bigram_collector(finder, 5, title)
+
+	finder = TrigramCollocationFinder.from_words(pop_tokens)
+
+	if finder:
+		besttrigrams = best_trigram_collector(finder, 5, title)
+	
+	#print bestbigrams, besttrigrams
+	
+	keywords = [item for sublist in bestbigrams for item in sublist] + [item for sublist in besttrigrams for item in sublist]
+
+	print len(pop_revs)
+	count = [0]*len(pop_revs)
+	i = 0
+	for rev in pop_revs:
+		if len(rev)>0:
+			for word in get_tokens(rev):
+				if word in keywords:
+					count[i] += 1
+			count[i] = float(count[i])/float(len(rev))
+			i += 1
+	
+	
+	bestrevs = []
+	for x, i in enumerate(count):
+		if i in heapq.nlargest(3, count):
+			bestrevs.append(pop_revs[x])
+	
+	
+	boldrevs = []
+	for rev in bestrevs:
+		hold = ''
+		for word in rev.split():
+			if string.lower(word.translate(None, string.punctuation)) in keywords:
+				hold = hold + " <strong>"+word + "</strong> "
+			else:
+				hold = hold + ' ' + word + ' '
+		if len(hold)<300:
+			boldrevs.append(hold)
+		else:
+			boldrevs.append(hold[:300] + "...")
+
+	charttitle = "Cumulative average reviews for " + title
+#title = '<a href="www.amazon.com/gp/product/'+PID[1:] + '">' + title + '</a>'
+
+	date1 = dt.datetime.fromtimestamp(time1)
+	date2 = dt.datetime.fromtimestamp(time2)
+	poplabel = "Reviews from <strong>" + date1.strftime("%B") + " " + str(date1.year) + "</strong> to <strong>" + date2.strftime("%B") + " " + str(date2.year) + "</strong>. " 
+
+	return boldrevs, poplabel
 	

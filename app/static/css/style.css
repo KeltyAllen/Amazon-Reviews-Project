@@ -53,3 +53,9 @@ body {
     margin: 10px;
 }
 
+.backdrop {
+	
+	background-color: white;
+	opacity: .85;
+	padding: 2.0%;
+}

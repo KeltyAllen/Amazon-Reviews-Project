@@ -155,8 +155,8 @@ $(function () {
 		
 		$("#zojirushi").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$("#product").val("B0000X7CMQ");
-				$.get( "/product/json/"+"B0000X7CMQ")
+				$("#product").val("Zojirushi EC-BD15BA Fresh Brew Thermal Carafe Coffee Maker");
+				$.get( "/product/json/"+"Zojirushi EC-BD15BA Fresh Brew Thermal Carafe Coffee Maker")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -168,8 +168,8 @@ $(function () {
 		
 		$("#taylor").click(function() {
 				//var product = $("#B0000X7CMQ").val();
-				$("#product").val("B0000E2PEI");
-				$.get( "/product/json/"+"B0000E2PEI")
+				$("#product").val("Taylor 7506 Glass and Chrome Digital Scale");
+				$.get( "/product/json/"+"Taylor 7506 Glass and Chrome Digital Scale")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -182,8 +182,8 @@ $(function () {
 		
 		$("#airpurifier").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$("#product").val("B00007E7RY");
-				$.get( "/product/json/"+"B00007E7RY")
+				$("#product").val("Honeywell Enviracaire HEPA Air Purifier");
+				$.get( "/product/json/"+"Honeywell Enviracaire HEPA Air Purifier")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -195,8 +195,8 @@ $(function () {
 		
 		$("#hamiltonbeach").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$("#product").val("B000FHQJ6C");
-				$.get( "/product/json/"+"B000FHQJ6C")
+				$("#product").val("Hamilton Beach Big Mouth Juice Extractor 67650");
+				$.get( "/product/json/"+"Hamilton Beach Big Mouth Juice Extractor 67650")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -208,8 +208,8 @@ $(function () {
 		
 		$("#thermometer").click(function() {
 				//var product = $("#B0000X7CMQ").val();
-				$("#product").val("B0000DIU49");
-				$.get( "/product/json/"+"B0000DIU49")
+				$("#product").val("Maverick Wireless BBQ Thermometer Set - Maverick ET73");
+				$.get( "/product/json/"+"Maverick Wireless BBQ Thermometer Set - Maverick ET73")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -221,8 +221,8 @@ $(function () {
 		
 		$("#victorinox").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$("#product").val("B000638D32");
-				$.get( "/product/json/"+"B000638D32")
+				$("#product").val("Victorinox 40520 Fibrox 8-Inch Chef's Knife");
+				$.get( "/product/json/"+"Victorinox 40520 Fibrox 8-Inch Chef's Knife")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
@@ -234,8 +234,8 @@ $(function () {
 		
 		$("#wabash").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$("#product").val("B00004SU35");
-				$.get( "/product/json/"+"B00004SU35")
+				$("#product").val("Wabash Valley Farms 25008 Whirley-Pop Stovetop Popcorn Popper");
+				$.get( "/product/json/"+"Wabash Valley Farms 25008 Whirley-Pop Stovetop Popcorn Popper")
 				.done(function (data) {
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
