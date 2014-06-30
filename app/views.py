@@ -47,7 +47,7 @@ def query_db(query):
 def query_isura_db(address):
 	try:
 		#response = with_timeout(2, urlopen, address, timeout_value="")
-		response = urlopen(address, None, 4)
+		response = urlopen(address, None, 3)
 		answer = response.read()
 		return answer
 	except:
