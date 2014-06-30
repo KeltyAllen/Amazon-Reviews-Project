@@ -81,7 +81,7 @@ def get_reviews():
 	print htmlstring
 	answer= query_isura_db(htmlstring)
 	
-	answer = "error"
+	#answer = "error"
 	
 	if (answer == "error"):
 		#### querying my rds home & kitchen database
@@ -103,8 +103,8 @@ def get_reviews():
 			text = reviews[i]['text']
 			data.append([reviews[i]['timestamp'], reviews[i]['score'], reviews[i]['userId'], text])
 		#print data
-		title = product_id
-		formatted_data, title, boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)
+		title = product
+		boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)
 
 	#boldrevs, poplabel = home_kitchen_time(PID, time1, time2)
 	return jsonify(reviews = boldrevs, title = poplabel)
