@@ -9,7 +9,7 @@ from urllib2 import Request, urlopen, URLError
 import urllib
 
 
-from eventlet.timeout import Timeout, with_timeout
+#from eventlet.timeout import Timeout, with_timeout
 
 import nltk
 from nltk.collocations import *
@@ -47,7 +47,9 @@ def query_db(query):
 def query_isura_db(address):
 	try:
 		#response = with_timeout(2, urlopen, address, timeout_value="")
-		response = urlopen(address, None, 2)
+		response = urlopen(address, None, 4)
+		answer = response.read()
+		return answer
 	except:
 		return "error"
 		
@@ -75,9 +77,9 @@ def get_reviews():
 	time2 = time.mktime(time2.timetuple())
 
 	#query isura's db?
-	#htmlstring =  'http://54.183.117.174:5000/api/v0.1/reviews/' + urllib.quote(product_id)
-	#print htmlstring
-	#answer= query_isura_db(htmlstring)
+	htmlstring =  'http://54.183.117.174:5000/api/v0.2/reviews/' + urllib.quote(product)
+	print htmlstring
+	answer= query_isura_db(htmlstring)
 	
 	answer = "error"
 	
@@ -92,12 +94,17 @@ def get_reviews():
 		data = query_db(query)
 		boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)	
 	else:
-		jsondata = json.load(answer)
+		jsondata = json.loads(answer)
 		###now need to get data, which has data[0] is time list, data[1] is scores, data[2] isn't used anymore (userid?), data[3] is text
-		#
-		#title = product
-		#boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)
-
+		#print jsondata
+		reviews = jsondata['reviews']
+		data = []
+		for i in range(len(reviews)):
+			text = reviews[i]['text']
+			data.append([reviews[i]['timestamp'], reviews[i]['score'], reviews[i]['userId'], text])
+		#print data
+		title = product_id
+		formatted_data, title, boldrevs, poplabel = home_kitchen_time(data, title, time1, time2)
 
 	#boldrevs, poplabel = home_kitchen_time(PID, time1, time2)
 	return jsonify(reviews = boldrevs, title = poplabel)
@@ -113,31 +120,45 @@ def product_details(product_id):  #which table? need to combine them before demo
 	#The following code will get the data as a json file from isura's db, or catch an error if db is down
 	#
 	#keep this code:
-	#htmlstring =  'http://54.183.117.174:5000/api/v0.1/reviews/' + urllib.quote(product_id)
-	#print htmlstring
-	#answer= query_isura_db(htmlstring)
+	htmlstring =  'http://54.183.117.174:5000/api/v0.2/reviews/' + urllib.quote(product_id)
+	print htmlstring
+	answer= query_isura_db(htmlstring)
 	#keep this code ^
 	
 	
 
-	#currently only using my database. 
-	answer = "error"
+	#to only use my database: 
+	#answer = "error"
+	
 	if (answer == "error"):
 		#### querying my rds home & kitchen database
 		tablename =  'all_hk'
 		query = "Select PID, PTitle from (SELECT PID, PTitle, COUNT(*) AS magnitude FROM " + tablename + " Where PTitle like ' " +product_id + "%' GROUP BY PID Order by magnitude desc) as a LIMIT 10;"
 		prodlist = query_db(query)
-		PID = prodlist[0][0]
-		title = prodlist[0][1]
-		query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
-		data = query_db(query)
-		formatted_data, title, boldrevs, poplabel = home_kitchen_data(data, title)	
+		try:
+			PID = prodlist[0][0]
+			title = prodlist[0][1]
+			query = "Select RTime, RScore, RSummary, RText From " + tablename +" Where PID = "  +'"' + PID +'" ORDER BY RTime ASC;'
+			data = query_db(query)
+			formatted_data, title, boldrevs, poplabel = home_kitchen_data(data, title)
+		except IndexError:
+			poplabel = "Sorry! Could not find anything matching " + PID
+			formatted_data = []
+			title = 'Sorry! Could not find anything matching '+ PID
+			boldrevs = []
 	else:
-		jsondata = json.load(answer)
+		#print answer
+		jsondata = json.loads(answer)
 		###now need to get data, which has data[0] is time list, data[1] is scores, data[2] isn't used anymore (userid?), data[3] is text
-		#
-		#title = product_id
-		#formatted_data, title, boldrevs, poplabel = home_kitchen_data(data, title)
+		#print jsondata
+		reviews = jsondata['reviews']
+		data = []
+		for i in range(len(reviews)):
+			text = reviews[i]['text']
+			data.append([reviews[i]['timestamp'], reviews[i]['score'], reviews[i]['userId'], text])
+		#print data
+		title = product_id
+		formatted_data, title, boldrevs, poplabel = home_kitchen_data(data, title)
 			
 			
 	return jsonify(ratings = formatted_data, prodname = title, reviews = boldrevs, title = poplabel)
@@ -206,7 +227,7 @@ def get_time_review_text(data, timemin, timemax):
     	maxindex = minindex + 200
     
     for i in range(minindex, maxindex):
-        returntext.append(rtext[i])
+        returntext.append(str(rtext[i]))
     for string in returntext:
         text = text + string
     print len(returntext)   
@@ -232,6 +253,8 @@ def first_pop_time(time):
 def get_tokens(text):
 	lowers = text.lower()
 	no_punctuation = lowers.translate(None, string.punctuation)
+	#super mysterious, it insists translate only takes one argument? it worked fine before?
+	#no_punctuation = lowers.translate(None, string.punctuation)
 	tokens = nltk.word_tokenize(no_punctuation)
 	filtered = [w for w in tokens if not w in stopwords.words('english')]
 	filtered = [w for w in filtered if not w in ['used', 'use', 'easy', 'product']]
@@ -330,10 +353,13 @@ def home_kitchen_data(data, title):
 	pop_text, pop_revs = get_time_review_text(data, popmin, popmax)
 
 	print len(pop_revs), len(data)
+	print "pop_revs", pop_revs[:5], "\n"
 
-
+	#pop_text = str(pop_text)
+	#print "pop_text", pop_text[:400]
+	
 	print "tokenizing"
-	pop_tokens = get_tokens(pop_text)
+	pop_tokens = get_tokens(str(pop_text))
 	
 	print "finder = bigramcollocationfinder"
 	finder = BigramCollocationFinder.from_words(pop_tokens)
@@ -362,19 +388,19 @@ def home_kitchen_data(data, title):
 	i = 0
 	for rev in pop_revs:
 		if len(rev)>0:
-			for word in get_tokens(rev):
+			for word in get_tokens(str(rev)):
 				if word in keywords:
 					count[i] += 1
 			count[i] = float(count[i])/float(len(rev))
 			i += 1
 	
-	
+	print "line 392"
 	bestrevs = []
 	for x, i in enumerate(count):
 		if i in heapq.nlargest(3, count):
 			bestrevs.append(pop_revs[x])
 	
-	
+	print "line 398"
 	boldrevs = []
 	for rev in bestrevs:
 		hold = ''
@@ -422,7 +448,7 @@ def home_kitchen_time(data, title, time1, time2):
 	pop_text, pop_revs = get_time_review_text(data, time1, time2)
 	print len(pop_revs), len(data)
 
-	pop_tokens = get_tokens(pop_text)
+	pop_tokens = get_tokens(str(pop_text))
 	
 	finder = BigramCollocationFinder.from_words(pop_tokens)
 	finder.apply_freq_filter(4)
@@ -443,7 +469,7 @@ def home_kitchen_time(data, title, time1, time2):
 	i = 0
 	for rev in pop_revs:
 		if len(rev)>0:
-			for word in get_tokens(rev):
+			for word in get_tokens(str(rev)):
 				if word in keywords:
 					count[i] += 1
 			count[i] = float(count[i])/float(len(rev))

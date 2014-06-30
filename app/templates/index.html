@@ -1,6 +1,9 @@
 {% extends "layout/base.html" %}
 
+
 {% block content %}
+<img id="loading" src="http://cds.s8y8y8q9.hwcdn.net/images/loading.gif" width="300px" style = "display:none;"/>
+
 
   <div id="wrap">
 <div id="wrapper" style="text-align: center">  
@@ -10,7 +13,7 @@
 	
     	<h2> Enter a Product Name:</h2>
    	 <input id="product" type="text"></input>
-   	 <button id="fetch_product_button" type="button">Go!</button>
+   	 <button id="fetch_product_button" type="button" >Go!</button>
 
 	</div>
    </div>
@@ -19,7 +22,7 @@
 <div class="row backdrop" id = "datarow" >
 	
 	<div class="col-md-8" >
-	
+
     		<div id="graph_container">
 		</div>
 	</div>
@@ -143,6 +146,8 @@
   ga('send', 'pageview');
 
 </script>
+
+
 {% endblock %}
 
 

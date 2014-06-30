@@ -37,6 +37,17 @@ body {
   background-color: #f5f5f5;
 }
 
+#loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  /* 1/2 of the height and width of the actual gif */
+  margin: -150px 0 0 -150px;
+  z-index: 100;
+}
+
 /* Genericon social icon styles
 ---------------------------------------------------- */
 .genericon-github:before,
@@ -59,3 +70,5 @@ body {
 	opacity: .85;
 	padding: 2.0%;
 }
+
+

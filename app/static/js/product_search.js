@@ -130,8 +130,10 @@ $(function () {
 		
 		$("#fetch_product_button").click(function() {
 				var product = $("#product").val(); 
+				$("#loading").show();
 				$.get( "/product/json/"+product)
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -145,8 +147,10 @@ $(function () {
 				var time1 = $("#time1").val(); 
 				var time2 = $("#time2").val();
 				var product = $("#product").val();
+				$("#loading").show();
 				$.get( "/times/?time1="+time1+"&time2="+time2+"&product="+product)
 				.done(function (data) {
+						$("#loading").hide();
 						//graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 				}); 
@@ -156,8 +160,10 @@ $(function () {
 		$("#zojirushi").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
 				$("#product").val("Zojirushi EC-BD15BA Fresh Brew Thermal Carafe Coffee Maker");
+				$("#loading").show();
 				$.get( "/product/json/"+"Zojirushi EC-BD15BA Fresh Brew Thermal Carafe Coffee Maker")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -169,8 +175,10 @@ $(function () {
 		$("#taylor").click(function() {
 				//var product = $("#B0000X7CMQ").val();
 				$("#product").val("Taylor 7506 Glass and Chrome Digital Scale");
+				$("#loading").show();
 				$.get( "/product/json/"+"Taylor 7506 Glass and Chrome Digital Scale")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -183,8 +191,10 @@ $(function () {
 		$("#airpurifier").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
 				$("#product").val("Honeywell Enviracaire HEPA Air Purifier");
+				$("#loading").show();
 				$.get( "/product/json/"+"Honeywell Enviracaire HEPA Air Purifier")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -196,8 +206,10 @@ $(function () {
 		$("#hamiltonbeach").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
 				$("#product").val("Hamilton Beach Big Mouth Juice Extractor 67650");
+				$("#loading").show();
 				$.get( "/product/json/"+"Hamilton Beach Big Mouth Juice Extractor 67650")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -209,8 +221,10 @@ $(function () {
 		$("#thermometer").click(function() {
 				//var product = $("#B0000X7CMQ").val();
 				$("#product").val("Maverick Wireless BBQ Thermometer Set - Maverick ET73");
+				$("#loading").show();
 				$.get( "/product/json/"+"Maverick Wireless BBQ Thermometer Set - Maverick ET73")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -221,9 +235,11 @@ $(function () {
 		
 		$("#victorinox").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
-				$("#product").val("Victorinox 40520 Fibrox 8-Inch Chef's Knife");
-				$.get( "/product/json/"+"Victorinox 40520 Fibrox 8-Inch Chef's Knife")
+				$("#product").val("Victorinox 40520");
+				$("#loading").show();
+				$.get( "/product/json/"+"Victorinox 40520")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
@@ -235,8 +251,10 @@ $(function () {
 		$("#wabash").click(function() {
 				//var product = $("#B0000X7CMQ").val(); 
 				$("#product").val("Wabash Valley Farms 25008 Whirley-Pop Stovetop Popcorn Popper");
+				$("#loading").show();
 				$.get( "/product/json/"+"Wabash Valley Farms 25008 Whirley-Pop Stovetop Popcorn Popper")
 				.done(function (data) {
+						$("#loading").hide();
 						graphData(data.ratings, data.prodname);
 						productstuff(data.title, data.reviews);
 						$('#timebutton').css("display","block")
