@@ -264,6 +264,37 @@ $(function () {
 		});
 	
 		
-
+		$("#vicks").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("Vicks 1.0 Gallon Cool Mist Humidifier");
+				$("#loading").show();
+				$.get( "/product/json/"+"Vicks 1.0 Gallon Cool Mist Humidifier")
+				.done(function (data) {
+						$("#loading").hide();
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		
+		$("#playmobil").click(function() {
+				//var product = $("#B0000X7CMQ").val(); 
+				$("#product").val("Playmobil Security Check Point");
+				$("#loading").show();
+				$.get( "/product/json/"+"Playmobil Security Check Point")
+				.done(function (data) {
+						$("#loading").hide();
+						graphData(data.ratings, data.prodname);
+						productstuff(data.title, data.reviews);
+						$('#timebutton').css("display","block")
+						$('#datarow').css("display", "block")
+						//$('#rowbackground').css("display", "block")
+				}); 
+		});
+		
+		
 		
 });
